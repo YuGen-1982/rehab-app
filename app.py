@@ -9,6 +9,34 @@ st.set_page_config(page_title="リハビリ支援ツール", layout="wide")
 
 
 # ============================================================
+# ログイン認証
+# ============================================================
+# ユーザー情報（実運用では secrets.toml や DB に移す）
+_USERS = {
+    "admin":  "password123",
+    "rehab":  "rehab2024",
+}
+
+def _login_page():
+    st.title("🏥 リハビリ支援ツール")
+    st.subheader("ログイン")
+    username = st.text_input("ユーザー名")
+    password = st.text_input("パスワード", type="password")
+    if st.button("ログイン"):
+        if _USERS.get(username) == password:
+            st.session_state["authenticated"] = True
+            st.session_state["username"] = username
+            st.rerun()
+        else:
+            st.error("ユーザー名またはパスワードが正しくありません")
+
+# 未ログインならログイン画面だけ表示して終了
+if not st.session_state.get("authenticated"):
+    _login_page()
+    st.stop()
+
+
+# ============================================================
 # 1. データ読み込み
 # ============================================================
 def load_all_logic(file_path):
@@ -201,7 +229,14 @@ def create_pdf_data(inputs: dict, results: dict) -> bytes:
 # ============================================================
 # 5. メイン UI
 # ============================================================
-st.title("🏥 高齢者リハビリ意思決定支援ツール")
+col_title, col_logout = st.columns([8, 1])
+with col_title:
+    st.title("🏥 高齢者リハビリ意思決定支援ツール")
+with col_logout:
+    st.write("")  # 縦位置を合わせる
+    if st.button("ログアウト"):
+        st.session_state.clear()
+        st.rerun()
 
 rehab_logic, med_master, safety_criteria = load_all_logic("logic.xlsx")
 
